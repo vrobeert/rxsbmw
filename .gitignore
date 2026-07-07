@@ -1,0 +1,10 @@
+node_modules
+dist
+.deploy-bin
+deploy-last.log
+tools/**/bin
+tools/**/obj
+.env
+.env.local
+.DS_Store
+*.log

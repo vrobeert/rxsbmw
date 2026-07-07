@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BavarianHub">
+  <rect width="512" height="512" rx="112" fill="#0a0a0c"/>
+  <circle cx="256" cy="256" r="176" fill="#121216" stroke="rgba(255,255,255,0.2)" stroke-width="10"/>
+  <path d="M256 80a176 176 0 0 1 176 176H256Z" fill="#1C69D4"/>
+  <path d="M80 256A176 176 0 0 1 256 80v176Z" fill="#ffffff"/>
+  <path d="M256 432A176 176 0 0 1 80 256h176Z" fill="#003DA5"/>
+  <path d="M432 256a176 176 0 0 1-176 176V256Z" fill="#00A0DE"/>
+  <circle cx="256" cy="256" r="86" fill="#0a0a0c" stroke="rgba(255,255,255,0.42)" stroke-width="8"/>
+  <text x="256" y="278" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="76" font-weight="800" fill="#fff">BH</text>
+</svg>
