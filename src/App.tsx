@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
+import { ClubDataProvider } from "./lib/clubData";
 
 const AdminPage = lazy(async () => ({ default: (await import("./pages/AdminPage")).AdminPage }));
 const AuthPage = lazy(async () => ({ default: (await import("./pages/AuthPage")).AuthPage }));
@@ -31,7 +32,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/",
-    element: <AppShell />,
+    element: (
+      <ClubDataProvider>
+        <AppShell />
+      </ClubDataProvider>
+    ),
     children: [
       { index: true, element: withFallback(<HomePage />) },
       { path: "garaj", element: withFallback(<GaragePage />) },

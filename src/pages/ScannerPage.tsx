@@ -5,6 +5,7 @@ import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { StatTile } from "../components/ui/StatTile";
+import { useClubData } from "../lib/clubData";
 
 interface BarcodeDetectorResult {
   readonly rawValue: string;
@@ -25,12 +26,18 @@ declare global {
 }
 
 export const ScannerPage = () => {
+  const { isDemo, events } = useClubData();
+  const nextEvent = events.find((event) => event.status === "upcoming") ?? events[0] ?? null;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<number | null>(null);
   const [status, setStatus] = useState("Camera este oprita.");
   const [lastScan, setLastScan] = useState<string | null>(null);
-  const [checkedIn, setCheckedIn] = useState(87);
+  const [checkedIn, setCheckedIn] = useState(nextEvent?.checkedInCount ?? 0);
+
+  useEffect(() => {
+    setCheckedIn(nextEvent?.checkedInCount ?? 0);
+  }, [nextEvent?.checkedInCount]);
 
   useEffect(
     () => () => {
@@ -70,7 +77,7 @@ export const ScannerPage = () => {
       }
 
       if (!window.BarcodeDetector) {
-        setStatus("Camera pornita. Browserul nu are scanner QR nativ; foloseste simularea demo.");
+        setStatus("Camera pornita. Browserul nu are scanner QR nativ.");
         return;
       }
 
@@ -120,9 +127,11 @@ export const ScannerPage = () => {
             <Button icon={<Camera size={18} />} onClick={startCamera}>
               Porneste camera
             </Button>
-            <Button variant="secondary" icon={<CheckCircle2 size={18} />} onClick={() => markCheckIn("demo-ticket-qr")}>
-              Demo check-in
-            </Button>
+            {isDemo ? (
+              <Button variant="secondary" icon={<CheckCircle2 size={18} />} onClick={() => markCheckIn("local-preview-ticket")}>
+                Demo check-in
+              </Button>
+            ) : null}
             <Button variant="ghost" icon={<RotateCcw size={18} />} onClick={stopCamera}>
               Opreste
             </Button>

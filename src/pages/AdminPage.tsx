@@ -1,29 +1,48 @@
 import { CheckCircle2, Download, Search, ShieldCheck, Ticket, UsersRound, Wrench } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { EmptyState } from "../components/ui/EmptyState";
+import { SkeletonLoader } from "../components/ui/SkeletonLoader";
 import { StatTile } from "../components/ui/StatTile";
-import { adminMembers, cars, events } from "../data/mock";
+import { useClubData } from "../lib/clubData";
 import type { AdminMemberRow } from "../types";
 
 export const AdminPage = () => {
+  const { loading, currentProfile, adminMembers, cars, events } = useClubData();
   const [query, setQuery] = useState("");
-  const fallbackEvent = events[0];
+  const nextEvent = events.find((event) => event.status === "upcoming") ?? events[0] ?? null;
+  const canUseStaffTools = currentProfile?.role === "admin" || currentProfile?.role === "staff";
 
-  if (!fallbackEvent) {
-    return null;
-  }
-
-  const nextEvent = events.find((event) => event.status === "upcoming") ?? fallbackEvent;
   const filteredMembers = useMemo(
     () =>
       adminMembers.filter((member) =>
         `${member.name} ${member.city} ${member.role} ${member.level}`.toLowerCase().includes(query.toLowerCase())
       ),
-    [query]
+    [adminMembers, query]
   );
+
+  if (loading) {
+    return <SkeletonLoader rows={5} />;
+  }
+
+  if (!canUseStaffTools) {
+    return (
+      <EmptyState
+        icon={<ShieldCheck size={24} />}
+        title="Acces staff necesar"
+        body="Panoul admin este disponibil doar pentru conturi cu rol staff sau admin in Supabase."
+        action={
+          <Link to="/login">
+            <Button>Intra in cont</Button>
+          </Link>
+        }
+      />
+    );
+  }
 
   const exportCsv = () => {
     const header = "name,city,role,level,membership_paid";
@@ -45,13 +64,17 @@ export const AdminPage = () => {
         eyebrow="Admin mobile + desktop"
         title="Staff dashboard"
         body="Pe telefon ramane rapid pentru interventii, iar pe calculator foloseste spatiul complet pentru cautare, tabele si exporturi."
-        action={<Button icon={<Download size={18} />} onClick={exportCsv}>Export CSV</Button>}
+        action={
+          <Button icon={<Download size={18} />} onClick={exportCsv}>
+            Export CSV
+          </Button>
+        }
       />
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile label="Membri total" value={156} icon={<UsersRound size={19} />} tone="blue" />
-        <StatTile label="Cotizatii active" value={129} icon={<CheckCircle2 size={19} />} />
-        <StatTile label="Inscrieri event" value={nextEvent.registeredCount} icon={<Ticket size={19} />} tone="red" />
+        <StatTile label="Membri total" value={adminMembers.length} icon={<UsersRound size={19} />} tone="blue" />
+        <StatTile label="Cotizatii active" value={adminMembers.filter((member) => member.membershipPaid).length} icon={<CheckCircle2 size={19} />} />
+        <StatTile label="Inscrieri event" value={nextEvent?.registeredCount ?? 0} icon={<Ticket size={19} />} tone="red" />
         <StatTile label="Masini moderate" value={cars.filter((car) => car.approved).length} icon={<Wrench size={19} />} />
       </section>
 
@@ -116,14 +139,18 @@ export const AdminPage = () => {
         <div className="space-y-5">
           <Card className="p-5">
             <h2 className="text-xl font-black">Eveniment curent</h2>
-            <p className="mt-1 text-sm text-white/52">{nextEvent.title}</p>
+            <p className="mt-1 text-sm text-white/52">{nextEvent?.title ?? "Niciun eveniment publicat"}</p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <LiveMetric label="Inscrisi" value={nextEvent.registeredCount} />
-              <LiveMetric label="Check-in" value={nextEvent.checkedInCount} />
+              <LiveMetric label="Inscrisi" value={nextEvent?.registeredCount ?? 0} />
+              <LiveMetric label="Check-in" value={nextEvent?.checkedInCount ?? 0} />
             </div>
             <div className="mt-4 grid gap-3">
-              <Button fullWidth icon={<Ticket size={18} />}>Editeaza eveniment</Button>
-              <Button fullWidth variant="secondary" icon={<ShieldCheck size={18} />}>Lista participanti</Button>
+              <Button fullWidth icon={<Ticket size={18} />}>
+                Editeaza eveniment
+              </Button>
+              <Button fullWidth variant="secondary" icon={<ShieldCheck size={18} />}>
+                Lista participanti
+              </Button>
             </div>
           </Card>
 
@@ -140,6 +167,7 @@ export const AdminPage = () => {
                   <Badge tone={car.approved ? "green" : "red"}>{car.approved ? "OK" : "Ascuns"}</Badge>
                 </div>
               ))}
+              {cars.length === 0 ? <p className="text-sm text-white/56">Nu exista masini de moderat.</p> : null}
             </div>
           </Card>
         </div>

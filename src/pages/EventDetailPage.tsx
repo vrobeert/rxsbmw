@@ -8,24 +8,31 @@ import { BottomSheet } from "../components/ui/BottomSheet";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
+import { SkeletonLoader } from "../components/ui/SkeletonLoader";
 import { Toast } from "../components/ui/Toast";
-import { events, sponsors } from "../data/mock";
+import { useClubData } from "../lib/clubData";
+import { supabase } from "../lib/supabase";
 import { roDateTime } from "../lib/format";
 
 export const EventDetailPage = () => {
   const { eventId } = useParams();
+  const { loading, isDemo, currentProfile, events, sponsors, refresh } = useClubData();
   const event = events.find((item) => item.id === eventId);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [category, setCategory] = useState("E36");
-  const [registered, setRegistered] = useState(false);
+  const [category, setCategory] = useState("General");
+  const [message, setMessage] = useState<string | null>(null);
   const ticketToken = useMemo(() => `demo-${eventId ?? "event"}-${category}`, [category, eventId]);
+
+  if (loading) {
+    return <SkeletonLoader rows={4} />;
+  }
 
   if (!event) {
     return (
       <EmptyState
         icon={<Ticket size={24} />}
         title="Evenimentul nu a fost gasit"
-        body="Linkul pare sa nu mai fie valid."
+        body="Linkul pare sa nu mai fie valid sau evenimentul nu este publicat."
         action={
           <Link to="/evenimente">
             <Button>Inapoi la evenimente</Button>
@@ -36,15 +43,40 @@ export const EventDetailPage = () => {
   }
 
   const eventSponsors = sponsors.filter((sponsor) => event.sponsorIds.includes(sponsor.id));
+  const categories = event.categories.length > 0 ? event.categories : ["General"];
 
-  const confirm = () => {
-    setRegistered(true);
+  const confirm = async () => {
+    if (isDemo) {
+      setMessage("Inscriere demo confirmata local.");
+      setSheetOpen(false);
+      return;
+    }
+
+    if (!currentProfile || !supabase) {
+      setMessage("Trebuie sa fii autentificat pentru inscriere.");
+      setSheetOpen(false);
+      return;
+    }
+
+    const { error } = await supabase.from("event_registrations").insert({
+      event_id: event.id,
+      profile_id: currentProfile.id,
+      payment_status: "pending"
+    });
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    await refresh();
+    setMessage("Inscriere trimisa. Biletul apare in profil dupa refresh.");
     setSheetOpen(false);
   };
 
   return (
     <div className="space-y-6">
-      <Toast message="Inscriere demo confirmata. In Supabase va fi creat un QR token unic." visible={registered} />
+      <Toast message={message ?? ""} visible={Boolean(message)} />
 
       <Link to="/evenimente" className="inline-flex items-center gap-2 text-sm font-bold text-white/58 hover:text-white">
         <ArrowLeft size={17} />
@@ -78,16 +110,20 @@ export const EventDetailPage = () => {
           <PageHeader title="Program si detalii" body={event.description} />
 
           <Card className="p-5">
-            <div className="space-y-4">
-              {event.schedule.map((item) => (
-                <div key={`${item.time}-${item.title}`} className="grid grid-cols-[72px_1fr] gap-4">
-                  <p className="font-black tabular-nums text-[#9cc4ff]">{item.time}</p>
-                  <div className="border-l border-white/10 pb-4 pl-4 last:pb-0">
-                    <p className="font-bold text-white">{item.title}</p>
+            {event.schedule.length > 0 ? (
+              <div className="space-y-4">
+                {event.schedule.map((item) => (
+                  <div key={`${item.time}-${item.title}`} className="grid grid-cols-[72px_1fr] gap-4">
+                    <p className="font-black tabular-nums text-[#9cc4ff]">{item.time}</p>
+                    <div className="border-l border-white/10 pb-4 pl-4 last:pb-0">
+                      <p className="font-bold text-white">{item.title}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-white/56">Programul nu este publicat inca.</p>
+            )}
           </Card>
         </div>
 
@@ -108,20 +144,24 @@ export const EventDetailPage = () => {
           <Card className="p-5">
             <h2 className="text-xl font-black">Sponsori</h2>
             <div className="mt-4 grid gap-3">
-              {eventSponsors.map((sponsor) => (
-                <a
-                  key={sponsor.id}
-                  href={sponsor.website}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="tap flex items-center gap-3 rounded-2xl border border-white/8 bg-white/5 p-3"
-                >
-                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-white text-sm font-black text-[#0a0a0c]">
-                    {sponsor.logoText}
-                  </span>
-                  <span className="font-bold">{sponsor.name}</span>
-                </a>
-              ))}
+              {eventSponsors.length > 0 ? (
+                eventSponsors.map((sponsor) => (
+                  <a
+                    key={sponsor.id}
+                    href={sponsor.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="tap flex items-center gap-3 rounded-2xl border border-white/8 bg-white/5 p-3"
+                  >
+                    <span className="grid h-12 w-12 place-items-center rounded-xl bg-white text-sm font-black text-[#0a0a0c]">
+                      {sponsor.logoText}
+                    </span>
+                    <span className="font-bold">{sponsor.name}</span>
+                  </a>
+                ))
+              ) : (
+                <p className="text-sm text-white/56">Nu exista sponsori publicati pentru acest eveniment.</p>
+              )}
             </div>
           </Card>
         </div>
@@ -136,7 +176,7 @@ export const EventDetailPage = () => {
               value={category}
               onChange={(eventChange) => setCategory(eventChange.target.value)}
             >
-              {event.categories.map((item) => (
+              {categories.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>
@@ -147,12 +187,14 @@ export const EventDetailPage = () => {
             <div className="flex items-center gap-3">
               <CheckCircle2 className="text-emerald-200" size={20} />
               <p className="text-sm leading-6 text-white/68">
-                Plata ramane marcata manual de admin in faza 1. Biletul primeste QR unic.
+                Plata ramane marcata manual de admin in faza 1. QR-ul final este generat de Supabase la inscriere.
               </p>
             </div>
-            <div className="mx-auto mt-4 w-fit rounded-2xl bg-white p-3">
-              <QRCode value={`bavarianhub:ticket:${ticketToken}`} size={120} />
-            </div>
+            {isDemo ? (
+              <div className="mx-auto mt-4 w-fit rounded-2xl bg-white p-3">
+                <QRCode value={`bavarianhub:ticket:${ticketToken}`} size={120} />
+              </div>
+            ) : null}
           </div>
           <Button fullWidth icon={<Ticket size={18} />} onClick={confirm}>
             Confirma inscrierea

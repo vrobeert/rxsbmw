@@ -5,11 +5,17 @@ import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { EmptyState } from "../components/ui/EmptyState";
-import { cars } from "../data/mock";
+import { SkeletonLoader } from "../components/ui/SkeletonLoader";
+import { useClubData } from "../lib/clubData";
 
 export const CarDetailPage = () => {
   const { carId } = useParams();
+  const { loading, cars } = useClubData();
   const car = cars.find((item) => item.id === carId);
+
+  if (loading) {
+    return <SkeletonLoader rows={4} />;
+  }
 
   if (!car) {
     return (

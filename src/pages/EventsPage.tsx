@@ -1,4 +1,4 @@
-import { Ticket } from "lucide-react";
+import { CalendarDays, Ticket } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import QRCode from "react-qr-code";
@@ -6,9 +6,11 @@ import { PageHeader } from "../components/PageHeader";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { EmptyState } from "../components/ui/EmptyState";
 import { SegmentedControl } from "../components/ui/SegmentedControl";
-import { demoProfile, events, registrations } from "../data/mock";
+import { SkeletonLoader } from "../components/ui/SkeletonLoader";
 import { EventCard } from "../features/EventCard";
+import { useClubData } from "../lib/clubData";
 import { roDateTime } from "../lib/format";
 
 type EventFilter = "Viitoare" | "Trecute";
@@ -16,13 +18,17 @@ type EventFilter = "Viitoare" | "Trecute";
 const filters: readonly EventFilter[] = ["Viitoare", "Trecute"];
 
 export const EventsPage = () => {
+  const { loading, events, registrations } = useClubData();
   const [filter, setFilter] = useState<EventFilter>("Viitoare");
-  const myRegistrations = registrations.filter((registration) => registration.profileId === demoProfile.id);
 
   const visibleEvents = useMemo(
     () => events.filter((event) => (filter === "Viitoare" ? event.status === "upcoming" : event.status === "past")),
-    [filter]
+    [events, filter]
   );
+
+  if (loading) {
+    return <SkeletonLoader rows={5} />;
+  }
 
   return (
     <div className="space-y-6">
@@ -39,11 +45,11 @@ export const EventsPage = () => {
 
       <SegmentedControl options={filters} value={filter} onChange={setFilter} />
 
-      {myRegistrations.length > 0 ? (
+      {registrations.length > 0 ? (
         <section>
           <h2 className="mb-3 text-xl font-black">Biletele mele</h2>
           <div className="grid gap-4 lg:grid-cols-2">
-            {myRegistrations.map((registration) => {
+            {registrations.map((registration) => {
               const event = events.find((item) => item.id === registration.eventId);
 
               if (!event) {
@@ -70,11 +76,15 @@ export const EventsPage = () => {
         </section>
       ) : null}
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        {visibleEvents.map((event) => (
-          <EventCard key={event.id} event={event} />
-        ))}
-      </section>
+      {visibleEvents.length > 0 ? (
+        <section className="grid gap-4 lg:grid-cols-2">
+          {visibleEvents.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </section>
+      ) : (
+        <EmptyState icon={<CalendarDays size={24} />} title="Nu exista evenimente" body="Evenimentele publicate in Supabase vor aparea aici." />
+      )}
     </div>
   );
 };

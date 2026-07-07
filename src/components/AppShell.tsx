@@ -1,7 +1,7 @@
 import { CalendarDays, CarFront, Home, QrCode, ShieldCheck, UserRound } from "lucide-react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet } from "react-router-dom";
 import { brand } from "../brand";
-import { demoProfile } from "../data/mock";
+import { useClubData } from "../lib/clubData";
 import { cn } from "../lib/cn";
 import { Avatar } from "./ui/Avatar";
 import { Badge } from "./ui/Badge";
@@ -25,7 +25,8 @@ const sidebarItems: TabItem[] = [
 ];
 
 export const AppShell = () => {
-  const canUseStaffTools = demoProfile.role === "admin" || demoProfile.role === "staff";
+  const { currentProfile } = useClubData();
+  const canUseStaffTools = currentProfile?.role === "admin" || currentProfile?.role === "staff";
   const tabs = canUseStaffTools ? staffTabs : memberTabs;
 
   return (
@@ -42,13 +43,20 @@ export const AppShell = () => {
             </div>
           </div>
 
-          <div className="mt-8 flex items-center gap-3 rounded-2xl border border-white/8 bg-white/5 p-3">
-            <Avatar src={demoProfile.avatarUrl} name={demoProfile.fullName} size="sm" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold">{demoProfile.fullName}</p>
-              <p className="text-xs text-white/48">{demoProfile.city}</p>
+          {currentProfile ? (
+            <div className="mt-8 flex items-center gap-3 rounded-2xl border border-white/8 bg-white/5 p-3">
+              <Avatar src={currentProfile.avatarUrl} name={currentProfile.fullName} size="sm" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold">{currentProfile.fullName}</p>
+                <p className="text-xs text-white/48">{currentProfile.city}</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <Link to="/login" className="tap mt-8 block rounded-2xl border border-white/8 bg-white/5 p-3">
+              <p className="text-sm font-bold">Vizitator</p>
+              <p className="mt-1 text-xs text-white/48">Intra in cont pentru profil si bilete.</p>
+            </Link>
+          )}
 
           <nav className="mt-8 space-y-1">
             {sidebarItems.map((item) => {
@@ -78,9 +86,11 @@ export const AppShell = () => {
           </nav>
 
           <div className="absolute bottom-6 left-5 right-5 rounded-2xl border border-white/8 bg-white/5 p-4">
-            <Badge tone="m">Staff ready</Badge>
+            <Badge tone={canUseStaffTools ? "m" : "muted"}>{canUseStaffTools ? "Staff ready" : "Member view"}</Badge>
             <p className="mt-3 text-sm leading-6 text-white/56">
-              Pe desktop ai spatiu real pentru administrare, tabele si scanare.
+              {canUseStaffTools
+                ? "Pe desktop ai spatiu real pentru administrare, tabele si scanare."
+                : "Datele vin din Supabase dupa autentificare."}
             </p>
           </div>
         </aside>
