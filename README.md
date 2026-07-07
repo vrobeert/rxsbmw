@@ -2,21 +2,22 @@
 
 Platforma web pentru club BMW, construita cu React 19, Vite, TypeScript, Tailwind CSS v4 si Supabase.
 
-Important: promptul initial cerea mobile-only, dar proiectul este ajustat pentru folosire reala si pe calculator. Membrii au experienta mobile-first, cu bottom tab bar pe telefon. Staff-ul si adminii au layout desktop cu navigatie laterala, tabele, exporturi si spatiu util pentru operare.
+Aplicatia este mobile-first pentru membri si are layout desktop real pentru staff/admin.
 
 ## Ce este inclus
 
 - PWA instalabila, cu manifest si service worker.
 - Design premium dark in stil RXS Studio.
 - Navigatie mobile bottom tabs si desktop sidebar.
-- Pagini demo: Acasa, Garaj, Detaliu masina, Evenimente, Detaliu eveniment, Profil, Admin, Scan QR, Login.
+- Pagini: Acasa, Garaj, Detaliu masina, Evenimente, Detaliu eveniment, Profil, Admin, Scan QR, Login.
 - Card digital de membru cu QR.
-- Garaj virtual cu feed, like la dublu tap si detalii masina.
-- Evenimente cu inscriere demo, bilet QR si statistici check-in.
+- Garaj virtual cu feed si detalii masina.
+- Evenimente cu inscriere, bilet QR si statistici check-in.
 - Panou admin/staff cu statistici, cautare membri, moderare si export CSV.
-- Schema Supabase completa in `SUPABASE_SETUP.md`.
+- Schema Supabase fara seed in `SUPABASE_SCHEMA_ONLY.sql`.
+- Script pentru sters seed demo in `SUPABASE_DELETE_DEMO_DATA.sql`.
 
-## Rulare locala
+## Rulare Locala
 
 ```bash
 pnpm install
@@ -31,42 +32,42 @@ http://localhost:5173
 
 ## Configurare Supabase
 
-1. Creeaza un proiect nou in Supabase.
+1. Creeaza sau deschide proiectul Supabase.
 2. Copiaza `.env.example` in `.env.local`.
 3. Completeaza:
 
 ```bash
 VITE_SUPABASE_URL=https://project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=anon-key
+VITE_SUPABASE_ANON_KEY=publishable-or-anon-key
 ```
 
-4. Ruleaza scripturile din `SUPABASE_SETUP.md` in SQL Editor.
-5. Creeaza bucket-urile Storage mentionate acolo: `avatars`, `car-photos`, `event-covers`, `event-gallery`, `sponsor-logos`.
+4. Ruleaza `SUPABASE_SCHEMA_ONLY.sql` in SQL Editor.
+5. Nu rula seed demo daca nu vrei date de test.
+6. Daca ai rulat deja seed-ul demo, ruleaza `SUPABASE_DELETE_DEMO_DATA.sql`.
 
-## Conturi demo recomandate
+Aplicatia nu mai include date demo hardcodate. Daca tabelele Supabase sunt goale, interfata afiseaza stari goale.
 
-Creeaza aceste conturi in Supabase Auth, apoi seteaza rolurile in tabelul `profiles`:
+## Deploy Railway
 
-```text
-admin@bavarianhub.ro / BavarianHub2026!
-membru@bavarianhub.ro / BavarianHub2026!
-staff@bavarianhub.ro / BavarianHub2026!
-```
-
-Aplicatia ruleaza si fara Supabase, in modul demo local, ca sa poti vedea rapid interfata.
-
-## Deploy Netlify
-
-Setari Netlify:
+Railway foloseste `railway.json`.
 
 ```text
 Build command: pnpm build
-Publish directory: dist
+Start command: pnpm start
 ```
 
-Redirectul pentru SPA este deja inclus in `netlify.toml`.
+In Railway, seteaza la Variables:
 
-## Deploy automat catre GitHub
+```text
+VITE_SUPABASE_URL=https://project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=publishable-or-anon-key
+```
+
+Nu seta cheia `service_role`, `sb_secret`, parola bazei de date sau JWT secret in frontend.
+
+Dupa ce modifici variabilele, ruleaza un redeploy nou in Railway.
+
+## Deploy Automat Catre GitHub
 
 Pentru repository-ul `https://github.com/vrobeert/rxsbmw.git`, foloseste unul dintre launcherele din radacina proiectului:
 
@@ -84,7 +85,7 @@ La rulare, scriptul:
 - face commit cu mesaj automat
 - impinge branch-ul `main` pe GitHub
 
-Autentificarea GitHub nu este salvata in script. Daca GitHub cere login, se va folosi Git Credential Manager sau autentificarea deja existenta pe calculator.
+Autentificarea GitHub nu este salvata in script.
 
 ## Structura
 
@@ -92,9 +93,8 @@ Autentificarea GitHub nu este salvata in script. Daca GitHub cere login, se va f
 src/
   brand.ts                 Branding schimbabil dintr-un singur loc
   components/              Shell, header si UI primitives
-  data/mock.ts             Date demo romanesti
   features/                Card membru, card masina, card eveniment, PWA banner
-  lib/                     Supabase, formatare, PWA helpers
+  lib/                     Supabase, date reale, formatare, PWA helpers
   pages/                   Rutele aplicatiei
 ```
 
