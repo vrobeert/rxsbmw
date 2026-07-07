@@ -133,7 +133,7 @@ export const ClubDataProvider = ({ children }: { readonly children: ReactNode })
       const sponsorRows = sponsorsResult.data ?? [];
       const eventSponsorRows = eventSponsorsResult.data ?? [];
       const announcementRows = announcementsResult.data ?? [];
-      const registrationRows = registrationsResult.data ?? [];
+      let registrationRows = registrationsResult.data ?? [];
 
       const membershipsByProfile = new Map(
         membershipRows.map((membership) => [membership.profile_id, membership])
@@ -157,6 +157,19 @@ export const ClubDataProvider = ({ children }: { readonly children: ReactNode })
           memberCode: profile.member_code
         };
       });
+
+      const currentProfile = profiles.find((profile) => profile.id === userId) ?? null;
+      const canSeeAdminRows = currentProfile?.role === "admin" || currentProfile?.role === "staff";
+
+      if (canSeeAdminRows) {
+        const allRegistrationsResult = await supabase.from("event_registrations").select("*");
+
+        if (allRegistrationsResult.error) {
+          throw allRegistrationsResult.error;
+        }
+
+        registrationRows = allRegistrationsResult.data ?? [];
+      }
 
       const photosByCar = groupBy(photoRows, (photo) => photo.car_id);
       const modsByCar = groupBy(modRows, (mod) => mod.car_id);
@@ -262,8 +275,6 @@ export const ClubDataProvider = ({ children }: { readonly children: ReactNode })
         };
       });
 
-      const currentProfile = profiles.find((profile) => profile.id === userId) ?? null;
-      const canSeeAdminRows = currentProfile?.role === "admin" || currentProfile?.role === "staff";
       const adminMembers = canSeeAdminRows
         ? profiles.map((profile): AdminMemberRow => ({
             id: profile.id,
