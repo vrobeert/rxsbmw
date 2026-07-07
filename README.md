@@ -14,8 +14,10 @@ Aplicatia este mobile-first pentru membri si are layout desktop real pentru staf
 - Garaj virtual cu feed si detalii masina.
 - Evenimente cu inscriere, bilet QR si statistici check-in.
 - Panou admin/staff cu statistici, cautare membri, moderare si export CSV.
-- Schema Supabase fara seed in `SUPABASE_SCHEMA_ONLY.sql`.
+- Schema Supabase canonica in `supabase/schema.sql`.
+- Script pentru facut cont admin in `supabase/make_admin.sql`.
 - Script pentru sters seed demo in `SUPABASE_DELETE_DEMO_DATA.sql`.
+- Audit al starii curente in `docs/AUDIT.md`.
 
 ## Rulare Locala
 
@@ -41,11 +43,14 @@ VITE_SUPABASE_URL=https://project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=publishable-or-anon-key
 ```
 
-4. Ruleaza `SUPABASE_SCHEMA_ONLY.sql` in SQL Editor.
-5. Nu rula seed demo daca nu vrei date de test.
-6. Daca ai rulat deja seed-ul demo, ruleaza `SUPABASE_DELETE_DEMO_DATA.sql`.
+4. Ruleaza `supabase/schema.sql` in SQL Editor.
+5. Creeaza-ti cont din aplicatie, apoi ruleaza `supabase/make_admin.sql` dupa ce inlocuiesti emailul.
+6. Nu rula seed demo daca nu vrei date de test.
+7. Daca ai rulat deja seed-ul demo, ruleaza `SUPABASE_DELETE_DEMO_DATA.sql`.
 
 Aplicatia nu mai include date demo hardcodate. Daca tabelele Supabase sunt goale, interfata afiseaza stari goale.
+
+Fișierul vechi `SUPABASE_SCHEMA_ONLY.sql` ramane temporar pentru compatibilitate, dar sursa principala pentru setup nou este `supabase/schema.sql`.
 
 ## Deploy Railway
 
@@ -105,3 +110,7 @@ pnpm build
 ```
 
 Build-ul ruleaza TypeScript strict si apoi produce varianta de productie Vite.
+
+## Stare Productie
+
+Vezi `docs/AUDIT.md` pentru inventarul modulelor existente, module lipsa si butoane care trebuie transformate in fluxuri reale inainte de livrarea finala.
