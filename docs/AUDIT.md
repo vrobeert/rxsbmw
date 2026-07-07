@@ -12,7 +12,7 @@ Nu este inca aplicatia finala completa din prompt. Mai multe module sunt doar pr
 
 - Auth: email/parola, creare cont si magic link prin Supabase. Lipsesc reset parola si onboarding complet.
 - Profil: card digital, date membru, masini proprii si bilete active. Lipsesc editare profil, schimbare parola, stergere cont, puncte fidelitate.
-- Garaj: feed public, filtre Recente/Populare/Garajul meu si detaliu masina. Lipsesc adaugare/editare/stergere masina, upload poze, like/comentarii reale din UI.
+- Garaj: feed public, filtre Recente/Populare/Garajul meu, detaliu masina, adaugare masina, editare masina, soft-hide si upload poze comprimate. Lipsesc reordonare/stergere poze, delete definitiv, like/comentarii reale din UI.
 - Evenimente: lista, detaliu eveniment, inscriere simpla si QR in profil. Lipsesc anulare inscriere, capacitate/waitlist in UI, galerie, Waze, plata gestionata complet.
 - Scan QR: camera si citire QR in browser. Inca nu valideaza tokenul in Supabase si nu scrie check-in real.
 - Admin: dashboard, cautare membri, export CSV, moderare afisata. Lipsesc CRUD membri/evenimente/sponsori/anunturi, schimbare rol/nivel/cotizatie, audit log.
@@ -33,9 +33,9 @@ Nu este inca aplicatia finala completa din prompt. Mai multe module sunt doar pr
 
 ## Butoane/fluxuri incomplete
 
-- `Garaj > Adauga masina`: buton fara formular/actiune.
+- `Garaj > Adauga masina`: rezolvat, deschide formular real cu upload poze.
 - `Profil > Editeaza profil`: buton fara formular/actiune.
-- `Profil > Adauga masina`: buton fara formular/actiune.
+- `Profil > Adauga masina`: rezolvat, duce la formularul real din Garaj.
 - `Admin > Editeaza eveniment`: buton fara actiune.
 - `Admin > Lista participanti`: buton fara actiune.
 - `CarDetail`: afiseaza like/comment count, dar nu permite like/comentariu.

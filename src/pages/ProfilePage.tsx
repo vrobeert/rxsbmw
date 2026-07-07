@@ -138,9 +138,11 @@ export const ProfilePage = () => {
           <Button variant="secondary" icon={<Settings size={18} />}>
             Editeaza profil
           </Button>
-          <Button variant="secondary" icon={<CarFront size={18} />}>
-            Adauga masina
-          </Button>
+          <Link to="/garaj?add=1">
+            <Button fullWidth variant="secondary" icon={<CarFront size={18} />}>
+              Adauga masina
+            </Button>
+          </Link>
           <Button variant="ghost" icon={<LogOut size={18} />} onClick={signOut}>
             Delogare
           </Button>
