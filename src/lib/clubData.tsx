@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { User } from "@supabase/supabase-js";
 import type { AdminMemberRow, Announcement, Car, CarMod, ClubEvent, EventScheduleItem, PaymentStatus, Profile, Registration, Sponsor } from "../types";
 import { carPlaceholder, eventPlaceholder, avatarPlaceholder } from "./placeholders";
 import { hasSupabaseConfig, supabase } from "./supabase";
@@ -60,7 +61,12 @@ export const ClubDataProvider = ({ children }: { readonly children: ReactNode })
 
     try {
       const { data: sessionData } = await supabase.auth.getSession();
-      const userId = sessionData.session?.user.id ?? null;
+      const authUser = sessionData.session?.user ?? null;
+      const userId = authUser?.id ?? null;
+
+      if (authUser) {
+        await ensureCurrentUserProfile(authUser);
+      }
 
       const [
         profilesResult,
@@ -353,6 +359,51 @@ const publicStorageUrl = (bucket: string, path: string) => {
 
   return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 };
+
+const ensureCurrentUserProfile = async (user: User) => {
+  if (!supabase) {
+    return;
+  }
+
+  const { data: existingProfile, error: lookupError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (lookupError) {
+    throw lookupError;
+  }
+
+  if (existingProfile) {
+    return;
+  }
+
+  const { error: insertError } = await supabase.from("profiles").insert({
+    id: user.id,
+    full_name: getProfileName(user),
+    city: "Romania"
+  });
+
+  if (insertError && insertError.code !== "23505") {
+    throw insertError;
+  }
+};
+
+const getProfileName = (user: User) => {
+  const metadata = user.user_metadata ?? {};
+  const metadataName =
+    textFromMetadata(metadata.full_name) ??
+    textFromMetadata(metadata.name) ??
+    textFromMetadata(metadata.display_name);
+
+  const emailName = user.email?.split("@")[0]?.replace(/[._-]+/g, " ").trim();
+  const name = metadataName ?? emailName ?? "Membru BMW";
+
+  return name.replace(/\s+/g, " ").trim() || "Membru BMW";
+};
+
+const textFromMetadata = (value: unknown) => (typeof value === "string" && value.trim() ? value.trim() : null);
 
 const normalizePaymentStatus = (status: "pending" | "cash" | "transfer" | "paid" | "refunded"): PaymentStatus => {
   if (status === "refunded") {

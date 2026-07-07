@@ -247,6 +247,43 @@ for each row execute function public.set_updated_at();
 create trigger events_updated_at before update on public.events
 for each row execute function public.set_updated_at();
 
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  profile_name text;
+begin
+  profile_name := nullif(
+    trim(
+      coalesce(
+        new.raw_user_meta_data ->> 'full_name',
+        new.raw_user_meta_data ->> 'name',
+        split_part(new.email, '@', 1),
+        'Membru BMW'
+      )
+    ),
+    ''
+  );
+
+  insert into public.profiles (id, full_name, city)
+  values (new.id, coalesce(profile_name, 'Membru BMW'), 'Romania')
+  on conflict (id) do nothing;
+
+  insert into public.memberships (profile_id, year, paid, expires_at)
+  values (new.id, extract(year from now())::integer, false, now() + interval '1 year')
+  on conflict (profile_id, year) do nothing;
+
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
 create or replace function public.is_admin()
 returns boolean
 language sql
